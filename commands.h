@@ -35,6 +35,8 @@ struct process
 extern List *queue0,*queue1,*queue2;
 extern Process* Running;
 extern List* blockedQueue;
+extern Process*init;
+
 
 bool Create(int priority);
 

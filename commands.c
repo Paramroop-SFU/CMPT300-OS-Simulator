@@ -4,11 +4,37 @@ bool first_time = false;
 static int pid_valueGenerator = 1;
 Process* Running;
 List* blockedQueue;
-//Note since im using queue
+Process*init;
+// Note since im using queue
 // insert with prepend
 // remove with last list_trim
 // only one process can be running at a time so I will just make a Variable that that holds the running process
 // Need to make a init processes, most likly best in main
+
+void printProcess(Process* item)
+{
+	if (item == NULL)
+		return;
+
+	char*message = item->message;
+	char*reply = item->reply;
+	printf("PID: %d\nOrignal Priority: %d\nCurrent Priority: %d \n",item->pid,item->orgPriority,item->curPriority);
+	if (item->messagestatus == none)
+		printf("message status: None\n");
+	else if(item->messagestatus == waiting_for_response)
+		printf("message status: Waiting\n");
+	else
+		printf("message status: Need to Reply\n");
+
+	printf("Message: %s\n",message);
+	printf("reply: %s\n",reply);
+	if(item->status == queued)
+		printf("Status: queued\n");
+	else if(item->status == running)
+		printf("Status: running\n");
+	else
+		printf("Status: blocked\n");
+}
 
 bool COMPARATOR_FN(void* pItem, void* pComparisonArg)
 {
@@ -21,7 +47,7 @@ bool COMPARATOR_FN(void* pItem, void* pComparisonArg)
 
 }
 
-void* getfromQueue()
+void* getfromQueue() // helper functions
 {
 	void* value = List_trim(queue0);
 	if (value != NULL)
@@ -38,6 +64,7 @@ void* getfromQueue()
 	return value;
 }
 
+// Proccess functions
 
 bool Create(int priority)
 {
@@ -47,9 +74,7 @@ bool Create(int priority)
 		queue1 = List_create();
 		queue2 = List_create();
 		blockedQueue = List_create();
-
 	}
-
 	Process* process = (Process*)malloc(sizeof(Process));
 	process->curPriority = priority;
 	process->orgPriority = priority;
@@ -75,6 +100,11 @@ bool Create(int priority)
 
 bool Fork()
 {
+		if (Running->pid == 0)
+		{
+			return false;
+		}
+
 		Process* process = (Process*)malloc(sizeof(Process));
 		process->curPriority = Running->orgPriority;
 		process->orgPriority = Running->orgPriority;
@@ -100,28 +130,41 @@ bool Fork()
 
 bool Kill(int pid) // kills no matter what excluding init, rn does not kill running
 {
-	List_first(queue0);
-	int* value = List_search(queue0,COMPARATOR_FN,pid);
+	if (Running->pid == pid)
+	{
+		Exit();
+	}
+
+	List_first(queue0); // make sure the queue searching from the start 
+	void* value = List_search(queue0,COMPARATOR_FN,pid); // if not null than found
 	if (value != NULL)
 	{
-		free(List_remove(queue0));
-		return true;
+		free(List_remove(queue0)); // remove and free
+		return true; // return
 	}
 	List_first(queue1);
-	int* value = List_search(queue0,COMPARATOR_FN,pid);
+value = List_search(queue1,COMPARATOR_FN,pid);
 	if (value != NULL)
 	{
 		free(List_remove(queue1));
 		return true;
 	}
 	List_first(queue2);
-	int* value = List_search(queue0,COMPARATOR_FN,pid);
+	 value = List_search(queue2,COMPARATOR_FN,pid);
 	if (value != NULL)
 	{
 		free(List_remove(queue2));
 		return true;
 	}
-	return false;
+	List_first(blockedQueue);
+	 value = List_search(blockedQueue,COMPARATOR_FN,pid);
+	if (value != NULL)
+	{
+		free(List_remove(blockedQueue));
+		return true;
+	}
+	
+	return false; // does not exsits
 
 }
 
@@ -136,7 +179,7 @@ bool Exit() // removes running, not freeing init
 	void* tempvalue = getfromQueue();
 	if (tempvalue == NULL)
 	{
-		// set init
+		Running = init;
 		return true;
 	}
 	else
@@ -149,12 +192,30 @@ bool Exit() // removes running, not freeing init
 bool Quantum() // simulates a timer running out, so put it back to the queue
 {
 	const int i = Running->curPriority;
-
+	if (i==0)
+	{
+		List_prepend(queue0,Running);
+	}
+	else if(i==1)
+	{
+		List_prepend(queue1,Running);
+	}
+	else
+	{
+		List_prepend(queue2,Running);
+	}
+	Running = NULL;
+	Running = getfromQueue(); // send to the running
+	if (Running == NULL)
+	{
+		Running = init;
+	}
 	
 }
 
-bool Send(int pid, char * msg)
+bool Send(int pid, char * msg) // assume data already allocated
 {
+	
 
 }
 
@@ -191,30 +252,8 @@ bool Procinfo(int pid)
 
 
 
-void printProcess(Process* item)
-{
-	if (item == NULL)
-		return;
 
-	char*message = item->message;
-	char*reply = item->reply;
-	printf("PID: %d\nOrignal Priority: %d\nCurrent Priority: %d \n",item->pid,item->orgPriority,item->curPriority);
-	if (item->messagestatus == none)
-		printf("message status: None\n");
-	else if(item->messagestatus == waiting_for_response)
-		printf("message status: Waiting\n");
-	else
-		printf("message status: Need to Reply\n");
 
-	printf("Message: %s\n",message);
-	printf("reply: %s\n",reply);
-	if(item->status == queued)
-		printf("Status: queued\n");
-	else if(item->status == running)
-		printf("Status: running\n");
-	else
-		printf("Status: blocked\n");
-}
 void Totalinfo() // prints all of the processes currently in the OS
 {
 	printf("Total Info\n");
@@ -227,20 +266,21 @@ void Totalinfo() // prints all of the processes currently in the OS
 		printProcess((Process*)temp->pItem);
 		temp = temp->pNext;
 	}
+	prinf("Priority 1:\n");
 	temp = queue1->pFirstNode;
 	while(temp!=NULL)
 	{
 		printProcess((Process*)temp->pItem);
 		temp = temp->pNext;
 	}
+	prinf("Priority 2:\n");
 	temp = queue2->pFirstNode;
 	while(temp!=NULL)
 	{
 		printProcess((Process*)temp->pItem);
 		temp = temp->pNext;
 	}
-
-
+	// need to print blocked processes
 }
 
 
