@@ -2,75 +2,93 @@
 
 int main()
 {
-	// for first time make init and add it to the Running
-	init = (Process*)malloc(sizeof(Process));
-	init->pid = 0;
-	Running = init;
+	//sETUP
+	char key;
+    int priority, pid, semaphore;
+    char message[MAX_MESSAGE_LENGTH];
 
-	while (1)
-	{
-		char option;
-		int c;
-		printf("Please choose a Command\n");
-		scanf("%c", &option);
+    // Initialize OS components
+    // queue0 = List_create();
+    // queue1 = List_create();
+    // queue2 = List_create();
+    // blockedQueue = List_create();
+	first_time = false;
+    Running = NULL;
 
-		if (option == 'C')
-		{
-			printf("C\n");
-		}
-		else if (option == 'F')
-		{
-			printf("F\n");
-		}
-		else if (option == 'K')
-		{
-			printf("K\n");
-		}
-		else if (option == 'E')
-		{
-			printf("E\n");
-		}
-		else if (option == 'Q')
-		{
-			printf("Q\n");
-		}
-		else if (option == 'S')
-		{
-			printf("S\n");
-		}
-		else if (option == 'R')
-		{
-			printf("R\n");
-		}
-		else if (option == 'Y')
-		{
-			printf("Y\n");
-		}
-		else if (option == 'N')
-		{
-			printf("N\n");
-		}
-		else if (option == 'P')
-		{
-			printf("P\n");
-		}
-		else if (option == 'V')
-		{
-			printf("V\n");
-		}
-		else if (option == 'I')
-		{
-			printf("I\n");
-		}
-		else if (option == 'T')
-		{
-			printf("T\n");
-		}
-		else
-		{
-			printf("Command does not exsits");
-		}
-		while ((c = getchar()) != '\n' && c != EOF)
-			;
-	}
+    while (1) {
+        printf("Enter the key keyword:\n");
+
+        scanf(" %c", &key);
+
+        switch (key) {
+            case 'C':
+                printf("Enter priority (0 = high, 1 = norm, 2 = low): ");
+                scanf("%d", &priority);
+                Create(priority);
+                break;
+            case 'F':
+                Fork();
+                break;
+            case 'K':
+                printf("Enter PID of process to kill: ");
+                scanf("%d", &pid);
+                Kill(pid);
+                break;
+            case 'E':
+                Exit();
+                break;
+            case 'Q':
+                Quantum();
+                break;
+            case 'S':
+                printf("Enter PID of receiver: ");
+                scanf("%d", &pid);
+                printf("Enter message (max 40 characters): ");
+                scanf("%s", message);
+                Send(pid, message);
+                break;
+            case 'R':
+                Receive();
+                break;
+            case 'Y':
+                printf("Enter PID of process to reply to: ");
+                scanf("%d", &pid);
+                printf("Enter reply message (max 40 characters): ");
+                scanf("%s", message);
+                Reply(pid, message);
+                break;
+            case 'N':
+                printf("Enter semaphore ID (0-4): ");
+                scanf("%d", &semaphore);
+                printf("Enter initial value: ");
+                scanf("%d", &priority);
+                newSemaphore(semaphore, priority);
+                break;
+            case 'P':
+                printf("Enter semaphore ID (0-4): ");
+                scanf("%d", &semaphore);
+                SemaphoreP(semaphore);
+                break;
+            case 'V':
+                printf("Enter semaphore ID (0-4): ");
+                scanf("%d", &semaphore);
+                SemaphoreV(semaphore);
+                break;
+            case 'I':
+                printf("Enter PID of process to get information: ");
+                scanf("%d", &pid);
+                Procinfo(pid);
+                break;
+            case 'T':
+                Totalinfo();
+                break;
+            case 'X':
+                printf("Exiting simulation.\n");
+                return 0;
+            default:
+                printf("Invalid key. Please try again.\n");
+        }
+    }
+
+    return 0;
 }

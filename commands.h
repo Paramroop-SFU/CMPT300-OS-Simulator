@@ -1,26 +1,34 @@
+#ifndef COMMANDS_H
+#define COMMANDS_H
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "list.h"
 #include <string.h>
 
+#define MAX_MESSAGE_LENGTH 100
+#define MAX_PROCESSES 100
+#define MAX_SEMAPHORES 5
 
-enum status
+
+
+typedef enum 
 {
 	queued,
 	running,
 	blocked,
 
-}; typedef enum status Status;
+}Status;
 
-enum message
+typedef enum 
 {
 	none,
 	waiting_for_response,
 	needs_to_reply
+}MessageStatus;
 
-}; typedef enum message MessageStatus;
-
-struct process
+typedef struct 
 {
 	int orgPriority;
 	int curPriority;
@@ -30,12 +38,20 @@ struct process
 	char*reply;
 	MessageStatus messagestatus;
 
-}; typedef struct process Process;
+}Process;
+
+typedef struct {
+
+	int val;
+
+} Semaphore;
+
 
 extern List *queue0,*queue1,*queue2;
 extern Process* Running;
 extern List* blockedQueue;
 extern Process*init;
+extern bool first_time;
 
 
 bool Create(int priority);
@@ -63,3 +79,6 @@ bool SempahoreV(int semaphore);
 bool Procinfo(int pid);
 
 void Totalinfo();
+
+
+#endif
