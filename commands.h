@@ -72,9 +72,9 @@ bool Reply(int pid,char* msg);
 
 bool newSemaphore(int semaphore, int initial);
 
-bool SempahoreP(int semaphore);
+bool SemaphoreP(int semaphore);
 
-bool SempahoreV(int semaphore);
+bool SemaphoreV(int semaphore);
 
 bool Procinfo(int pid);
 

@@ -56,7 +56,18 @@ void printQueueInfo(List *queue) {
 }
 
 
-bool COMPARATOR_FN(void* pItem, void* pComparisonArg)
+// bool compareFunct(void* pItem, void* pComparisonArg)
+// {
+// 	Process*temp = (Process*)pItem;
+// 	int* pidCompare = (int*)pComparisonArg;
+// 	if (temp->pid == *pidCompare)
+// 		return true;
+
+// 	return false;
+
+// }
+
+bool compareFunct(void* pItem, void* pComparisonArg)
 {
 	Process*temp = (Process*)pItem;
 	int* pidCompare = (int*)pComparisonArg;
@@ -164,28 +175,28 @@ bool Kill(int pid) // kills no matter what excluding init, rn does not kill runn
 	}
 
 // 	List_first(queue0); // make sure the queue searching from the start 
-// 	void* value = List_search(queue0,COMPARATOR_FN,pid); // if not null than found
+// 	void* value = List_search(queue0,compareFunct,pid); // if not null than found
 // 	if (value != NULL)
 // 	{
 // 		free(List_remove(queue0)); // remove and free
 // 		return true; // return
 // 	}
 // 	List_first(queue1);
-// value = List_search(queue1,COMPARATOR_FN,pid);
+// value = List_search(queue1,compareFunct,pid);
 // 	if (value != NULL)
 // 	{
 // 		free(List_remove(queue1));
 // 		return true;
 // 	}
 // 	List_first(queue2);
-// 	 value = List_search(queue2,COMPARATOR_FN,pid);
+// 	 value = List_search(queue2,compareFunct,pid);
 // 	if (value != NULL)
 // 	{
 // 		free(List_remove(queue2));
 // 		return true;
 // 	}
 // 	List_first(blockedQueue);
-// 	 value = List_search(blockedQueue,COMPARATOR_FN,pid);
+// 	 value = List_search(blockedQueue,compareFunct,pid);
 // 	if (value != NULL)
 // 	{
 // 		free(List_remove(blockedQueue));
@@ -198,7 +209,7 @@ bool Kill(int pid) // kills no matter what excluding init, rn does not kill runn
     List* queues[] = {queue0, queue1, queue2};
     for (int i = 0; i < 3; ++i) {
         List_first(queues[i]);
-        int* value = List_search(queues[i], COMPARATOR_FN, &pid);
+        int* value = List_search(queues[i], compareFunct, &pid);
         if (value != NULL) {
             free(List_remove(queues[i]));
             found = true;
@@ -278,28 +289,30 @@ bool Send(int pid, char * msg) // assume data already allocated
 		for(int i = 0; i < 3; i++){
 			//look for the process to be sent to
 			List_first(queues[i]);
-			recv = List_search(queues[i], COMPARATOR_FN, &pid);
+			recv = List_search(queues[i], compareFunct, &pid);
 			
 			if(recv != NULL) {
 				break;
 			}
+		}
 		//if pid not found
-		if(recv != NULL) {
-			strncpy(recv->message, msg, MAX_MESSAGE_LENGTH-1);
-			recv->messagestatus = waiting_for_response;
-			Running->status = blocked;
-			List_append(blockedQueue, Running);
 
-			Running = (Process*)getfromQueue();
-			return true;
+		if(recv == NULL) {
+			//print statement
+			return false;
 		}
 
-		}
-		return false;
+		strncpy(recv->message, msg, MAX_MESSAGE_LENGTH-1);
+		recv->messagestatus = waiting_for_response;
+		Running->status = blocked;
+		List_append(blockedQueue, Running);
 
-
+		Running = (Process*)getfromQueue();
+		return true;
 	}
-	
+	else {
+		return false;
+	}
 
 }
 
@@ -326,7 +339,7 @@ bool Reply(int pid,char* msg)
 	//Seach for the pid process
 	Process* send = NULL;
 	List_first(blockedQueue);
-	send = List_search(blockedQueue, COMPARATOR_FN, &pid);
+	send = List_search(blockedQueue, compareFunct, &pid);
 	if(send != NULL) {
 		strncpy(send->reply, msg, MAX_MESSAGE_LENGTH-1);
 		send->messagestatus = needs_to_reply;
@@ -348,7 +361,7 @@ bool newSemaphore(int semaphore, int initial)
 
 }
 
-bool SempahoreP(int semaphore)
+bool SemaphoreP(int semaphore)
 {//0 to 4 sem ID
 	if(semaphore >= 0 && semaphore < 5) {
 		//deccrement by 1
@@ -359,7 +372,7 @@ bool SempahoreP(int semaphore)
 
 }
 
-bool SempahoreV(int semaphore)
+bool SemaphoreV(int semaphore)
 {
 	//0 to 4 sem ID
 	if(semaphore >= 0 && semaphore < 5) {
@@ -379,7 +392,7 @@ bool Procinfo(int pid)
     List* queues[] = {queue0, queue1, queue2, blockedQueue};
     for (int i = 0; i < 4; ++i) {
         List_first(queues[i]);
-        process = List_search(queues[i], COMPARATOR_FN, &pid);
+        process = List_search(queues[i], compareFunct, &pid);
         if (process != NULL)
             break;
     }
