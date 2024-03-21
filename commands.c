@@ -6,7 +6,7 @@ static int pid_valueGenerator = 1;
 //Running to NULL for setup???? -- should be set to init
 Process*init; 
 Process* Running;
-List* blockedQueue;
+
 
 //0 to 4 sem ID
 Semaphore sem[5];

@@ -49,7 +49,6 @@ typedef struct {
 
 extern List *queue0,*queue1,*queue2;
 extern Process* Running;
-extern List* blockedQueue;
 extern Process*init;
 extern bool first_time;
 
