@@ -13,13 +13,14 @@ int main()
     // queue2 = List_create();
     // blockedQueue = List_create();
 	first_time = false;
-    Running = NULL;
-
+   
+    Init(); // set up init
     while (1) {
         printf("Enter the key keyword:\n");
 
         scanf(" %c", &key);
-
+        int c; // used to clear the buffer IMPORTANT
+        while ((c = getchar()) != '\n' && c != EOF);
         switch (key) {
             case 'C':
                 printf("Enter priority (0 = high, 1 = norm, 2 = low): ");

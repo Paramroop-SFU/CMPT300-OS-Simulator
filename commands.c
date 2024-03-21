@@ -3,13 +3,14 @@
 List*queue1,*queue0,*queue2;
 bool first_time;
 static int pid_valueGenerator = 1;
-//Running to NULL for setup????
+//Running to NULL for setup???? -- should be set to init
+Process*init; 
 Process* Running;
 List* blockedQueue;
 
 //0 to 4 sem ID
 Semaphore sem[5];
-Process*init;
+
 // Note since im using queue
 // insert with prepend
 // remove with last list_trim
@@ -53,6 +54,23 @@ void printQueueInfo(List *queue) {
         printProcess((Process*) current->pItem);
         current = current->pNext;
     }
+}
+
+void Init()
+{
+	Process*temp = (Process*)malloc(sizeof(Process));
+	temp->pid = 0;
+	init = temp;
+	Running = init;
+	if (!first_time)
+	{
+		queue0 = List_create();
+		queue1 = List_create();
+		queue2 = List_create();
+		blockedQueue = List_create();
+		//Set it to to true, for after first time
+		first_time = true;
+	}
 }
 
 
@@ -104,15 +122,7 @@ Process* getfromQueue() // helper functions
 
 bool Create(int priority)
 {
-	if (!first_time)
-	{
-		queue0 = List_create();
-		queue1 = List_create();
-		queue2 = List_create();
-		blockedQueue = List_create();
-		//Set it to to true, for after first time
-		first_time = true;
-	}
+	
 	Process* process = (Process*)malloc(sizeof(Process));
 	process->curPriority = priority;
 	process->orgPriority = priority;
@@ -121,6 +131,11 @@ bool Create(int priority)
 	process->message = NULL;
 	process->reply=NULL;
 	process->messagestatus = none;
+	if (Running->pid == 0)
+	{
+		Running = process;
+		return true;
+	}
 	int success;
 	if (priority == 0)
 		 success = List_prepend(queue0,process); // highest priorty
@@ -128,6 +143,8 @@ bool Create(int priority)
 		success = List_prepend(queue1,process);
 	else
 		success = List_prepend(queue2,process);
+
+	
 
 	if (success == -1)
 		return false;
@@ -171,7 +188,7 @@ bool Kill(int pid) // kills no matter what excluding init, rn does not kill runn
 {
 	if (Running->pid == pid)
 	{
-		Exit();
+		Exit(); // Not a good implementaion
 	}
 
 // 	List_first(queue0); // make sure the queue searching from the start 
@@ -223,7 +240,7 @@ bool Exit() // removes running, not freeing init
 {
 	if (Running == NULL  ||Running->pid == 0)
 	{
-		Running == NULL;
+		Running = NULL;
 		return false;
 	}
 	free(Running);

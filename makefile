@@ -16,6 +16,6 @@ commands.o: commands.c commands.h list.h
 # 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f *.o simulator
+	rm -f commands.o main.o simulator
 
 
