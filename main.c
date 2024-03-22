@@ -15,6 +15,7 @@ int main()
 	first_time = false;
    
     Init(); // set up init
+    initSem();
     while (1) {
         printf("Enter the key keyword:\n");
 

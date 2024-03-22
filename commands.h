@@ -7,7 +7,7 @@
 #include "list.h"
 #include <string.h>
 
-#define MAX_MESSAGE_LENGTH 100
+#define MAX_MESSAGE_LENGTH 40
 #define MAX_PROCESSES 100
 #define MAX_SEMAPHORES 5
 
@@ -43,6 +43,8 @@ typedef struct
 typedef struct {
 
 	int val;
+	bool created;
+	List* processesWaiting;
 
 } Semaphore;
 
