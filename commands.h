@@ -82,4 +82,6 @@ bool Procinfo(int pid);
 void Totalinfo();
 
 void Init();
+
+void initSem();
 #endif
