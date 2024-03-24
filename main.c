@@ -5,7 +5,7 @@ int main()
 	//sETUP
 	char key;
     int priority, pid, semaphore;
-    char message[MAX_MESSAGE_LENGTH];
+  
 
     // Initialize OS components
     // queue0 = List_create();
@@ -45,7 +45,9 @@ int main()
             case 'S':
                 printf("Enter PID of receiver: ");
                 scanf("%d", &pid);
-                printf("Enter message (max 40 characters): ");
+                // adding malloc for the char
+                char* message = (char*)malloc(40*sizeof(char));
+                printf("Enter message (max 40 characters): "); // need to use malloc
                 scanf("%s", message);
                 Send(pid, message);
                 break;
