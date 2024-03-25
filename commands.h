@@ -18,15 +18,24 @@ typedef enum
 	queued,
 	running,
 	blocked,
+	
 
 }Status;
 
 typedef enum 
 {
+	nones,
+	needs_to_reply, // for process that was sent a message, and needs to receive and reply
+	
+
+}replyStatus;
+
+typedef enum
+{
 	none,
+	message_in_inbox,
 	waiting_for_response,
-	needs_to_reply
-}MessageStatus;
+}recieveStatus;
 
 typedef struct 
 {
@@ -35,8 +44,10 @@ typedef struct
 	Status status;
 	int pid;
 	char*message;
-	char*reply;
-	MessageStatus messagestatus;
+	int replyPID;
+	replyStatus replystatus;
+	recieveStatus recieveStatus;
+
 
 }Process;
 
