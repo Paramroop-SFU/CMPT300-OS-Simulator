@@ -36,7 +36,6 @@ typedef enum
 	none,
 	message_in_inbox,
 	waiting_for_response,
-	auto_receive,
 	receive_Wout_message,
 	prints,
 }recieveStatus;

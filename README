@@ -1,4 +1,4 @@
-Things to do
+By Paramroop Parmar and Taranjot Singh Date March 25 2024
 
 
 
@@ -8,17 +8,19 @@ Documentaion for Starvation problem:
  This occurs every 7 cycles of the while loop.
 
 
-Documentaion 
+Documentaion for reading message
 For reply and send message the scanf only gets the first 40 characters and discards the rest
 
 
- Documentation for more than one message
+Documentation for more than one message
     If process Receives another message while one is still pending then the most recent message will fail a
     and not send, but the sender still gets blocked
 
 Documention for send/reply
-   if a process is blocked from a send, then it can only receive from a reply
+   if a process is blocked from a send, then it can only receive from a reply however will still get blocked if it tries
    if a process is blocked from a recieve, then can only receive from a send
+   Send also works normally if the process is not in the blocked message queue
+   init(does not get blocked)
 
  Documentation for Semaphores and init
     We chose init to not be allowed to use semaphores, P calls since they cannot be blocked and it would cause problems for the the other process blocked since they will need to wait a extra V call to be unblocked
