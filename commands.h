@@ -27,6 +27,7 @@ typedef enum
 	nones,
 	needs_to_reply, // for process that was sent a message, and needs to receive and reply
 	
+	
 
 }replyStatus;
 
@@ -35,6 +36,9 @@ typedef enum
 	none,
 	message_in_inbox,
 	waiting_for_response,
+	auto_receive,
+	receive_Wout_message,
+	prints,
 }recieveStatus;
 
 typedef struct 
@@ -95,4 +99,8 @@ void Totalinfo();
 void Init();
 
 void initSem();
+
+void starvation();
+
+void print_rec();
 #endif

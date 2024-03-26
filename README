@@ -1,25 +1,25 @@
 Things to do
-make a catch for if user makes the wrong pid choice
-    send has a catch been added
-
-Make sure to fix print 
-
-Document for Stravation problem 
-rn does noting for it
-
-ADD a check for if the messages are no greater than 40;
 
 
-Document if u allow init to do semaphore
 
-when exiting a process make sure to free the message if it has one
+
+Documentaion for Starvation problem:
+ The way we chose to deal with the starvation is by moving the the process in lower two queues up by one. For example all of the processes in queue 1 will move up to queue 0
+ This occurs every 7 cycles of the while loop.
+
+
+Documentaion 
+For reply and send message the scanf only gets the first 40 characters and discards the rest
 
 
  Documentation for more than one message
     If process Receives another message while one is still pending then the most recent message will fail a
-    and not send
+    and not send, but the sender still gets blocked
+
+Documention for send/reply
+   if a process is blocked from a send, then it can only receive from a reply
+   if a process is blocked from a recieve, then can only receive from a send
 
  Documentation for Semaphores and init
-    We chose init to not be allowed to use semaphores, P calls since they cannot be blocked and this will just cause problems for other process using them.
+    We chose init to not be allowed to use semaphores, P calls since they cannot be blocked and it would cause problems for the the other process blocked since they will need to wait a extra V call to be unblocked
 
- // if unblocked check if init is running

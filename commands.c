@@ -4,15 +4,42 @@ List *queue1, *queue0, *queue2;
 List *blockQueue, *blockedALLsem;
 bool first_time;
 static int pid_valueGenerator = 1;
-// Running to NULL for setup???? -- should be set to init
+
 Process *init;
 Process *Running;
 
 // 0 to 4 sem ID
 Semaphore sem[5];
 
+void print_rec()
+{
+	if (Running->recieveStatus == prints)
+	{
+		printf("The Message is: %s",Running->message);
+		free(Running->message);
+		Running->message = NULL;
+		Running->recieveStatus = none;
+	}
+}
 // Note since im using queue
-
+void starvation()
+{
+	// move everything in queue 1 to queue 0
+	while(List_count(queue1) > 0)
+	{
+		List_first(queue1);
+		Process* temp = List_remove(queue1);
+		temp->curPriority--;
+		List_append(queue0,temp);
+	}
+	while(List_count(queue2) > 0)
+	{
+		List_first(queue2);
+		Process* temp = List_remove(queue2);
+		temp->curPriority--;
+		List_append(queue1,temp);
+	}
+}
 // only one process can be running at a time so I will just make a Variable that that holds the running process
 // Need to make a init processes, most likly best in main
 
@@ -28,7 +55,7 @@ void printProcess(Process *item)
 	if (item->recieveStatus == none)
 		printf("  message status: None\n");
 	else if (item->recieveStatus == waiting_for_response)
-		printf("  message status: Waiting and blocked\n");
+		printf("  message status: Waiting and blocked (excluding init its not blocked)\n");
 	else
 		printf("  message status: Message in the inbox\n");
 
@@ -70,6 +97,8 @@ void Init()
 {
 	Process *temp = (Process *)malloc(sizeof(Process));
 	temp->pid = 0;
+	temp->curPriority = 3;
+	temp->orgPriority = 3;
 	temp->status = running;
 	temp->message = NULL;
 	temp->recieveStatus = none;
@@ -149,30 +178,27 @@ bool getfromQueue() // helper functions
 Process *getUnblockfromQueue() // helper functions
 {
 	Process *availProcess = NULL;
-	int m = 0;
+
 	if (List_count(queue0) > 0)
 	{
 		List_first(queue0);
-		if ((Process *)List_search(queue0, UnblockcompareFunct, &m) != NULL)
-		{
+		
 			availProcess = List_remove(queue0);
-		}
+		
 	}
 	else if (List_count(queue1) > 0)
 	{
 		List_first(queue1);
-		if ((Process *)List_search(queue1, UnblockcompareFunct, &m) != NULL)
-		{
+		
 			availProcess = List_remove(queue1);
-		}
+		
 	}
 	else if (List_count(queue2) > 0)
 	{
 		List_first(queue2);
-		if ((Process *)List_search(queue2, UnblockcompareFunct, &m) != NULL)
-		{
-			availProcess = List_remove(queue2);
-		}
+		
+		availProcess = List_remove(queue2);
+		
 	}
 
 	return availProcess;
@@ -318,6 +344,12 @@ bool Kill(int pid) // kills no matter what excluding init, rn does not kill runn
 		Exit(); // using function below
 		return true;
 	}
+	if(pid == 0)
+	{
+		printf("Cannot kill init while other processes exists!\n");
+		return false;
+	}
+		
 
 	List *queues[] = {queue0, queue1, queue2, blockQueue, blockedALLsem};
 	for (int i = 0; i < 5; ++i)
@@ -326,7 +358,13 @@ bool Kill(int pid) // kills no matter what excluding init, rn does not kill runn
 		void *value = List_search(queues[i], compareFunct, &pid);
 		if (value != NULL)
 		{
-			free(List_remove(queues[i]));
+			
+			Process* temp = (List_remove(queues[i]));
+			if (temp->message != NULL)
+			{
+				free(temp->message);
+			}
+			free(temp);
 			return true;
 		}
 	}
@@ -354,6 +392,10 @@ bool Exit() // removes running, not freeing init
 	}
 
 	// this section for if the Running does not have init process, but a normal process
+	if (Running->message != NULL)
+	{
+		free(Running->message);
+	}
 	free(Running);
 	Running = NULL;
 	// find a unblock process
@@ -418,6 +460,10 @@ bool Send(int pid, char *msg) // assume data already allocated, also need to fig
 	{
 		sendingTO = Running;
 	}
+	if (pid == 0)
+	{
+		sendingTO = init;
+	}
 	// if pid not found after all the queues
 	if (sendingTO == NULL)
 	{
@@ -426,10 +472,12 @@ bool Send(int pid, char *msg) // assume data already allocated, also need to fig
 		free(msg);
 		return false;
 	}
+	
 	// check if proccess already has a pending message
-	if (sendingTO->message != NULL)
+	if (sendingTO->message != NULL || sendingTO->recieveStatus == waiting_for_response)
 	{
-		printf("Process %d already has a pending message\n", pid);
+		
+		printf("Process %d already has a pending message or will only recieve from a reply\n", pid);
 		free(msg);
 		Running->status = blocked;
 		Running->recieveStatus = waiting_for_response;
@@ -441,16 +489,55 @@ bool Send(int pid, char *msg) // assume data already allocated, also need to fig
 		{
 
 			Running = init;
+			Running->status = running;
 			return true;
 		}
 		Running = (Process *)tempvalue;
+		Running->status = running;
 		return false;
 	}
 
 	// change the message it sending to data
-	sendingTO->message = msg;
+	if (sendingTO->recieveStatus == receive_Wout_message)
+	{
+		sendingTO->message = msg;
+		sendingTO->replystatus = nones;
+		sendingTO->recieveStatus = prints;
+		List_first(blockQueue);
+		List_search(blockQueue, compareFunct, &(sendingTO->pid));
+		List_remove(blockQueue); // remove block process from the blocked queue
+		if (Running->pid == 0)
+		{
+			Running = sendingTO;
+			Running->status = running;
+			printf("The message is: %s\n",msg);
+			free(msg);
+			
+		}
+		else
+		{
+			int priorty = sendingTO->curPriority;
+		sendingTO->status = queued;
+		if (priorty == 0)
+			List_append(queue0, sendingTO);
+
+		else if (priorty == 1)
+			List_append(queue1, sendingTO);
+		else if (priorty == 1)
+			List_append(queue2, sendingTO);
+		}
+		
+			
+
+	}
+	else
+	{
+		sendingTO->message = msg;
 	sendingTO->replystatus = needs_to_reply;
 	sendingTO->recieveStatus = message_in_inbox;
+	}
+	
+	
 
 	// check if Running is init since it cant get blocked
 	if (Running->pid == 0)
@@ -468,11 +555,12 @@ bool Send(int pid, char *msg) // assume data already allocated, also need to fig
 	Process *tempvalue = getUnblockfromQueue();
 	if (tempvalue == NULL)
 	{
-
+		
 		Running = init;
 		return true;
 	}
 	Running = (Process *)tempvalue;
+	Running->status = running;
 	return true;
 }
 
@@ -495,7 +583,7 @@ bool Receive()
 			return false;
 		}
 		Running->status = blocked;
-		Running->recieveStatus = waiting_for_response;
+		Running->recieveStatus = receive_Wout_message;
 		List_append(blockQueue, Running);
 		Running = NULL;
 
@@ -526,13 +614,17 @@ bool Reply(int pid, char *msg) // if unblocked check if init is running
 		// found
 		if (replyTO != NULL)
 		{
-			printf("FOund\n");
+			
 			break;
 		}
 	}
 	if (pid == Running->pid)
 	{
 		replyTO = Running;
+	}
+	if (pid == 0)
+	{
+		replyTO = init;
 	}
 	// if pid not found after all the queues
 	if (replyTO == NULL)
@@ -553,7 +645,7 @@ bool Reply(int pid, char *msg) // if unblocked check if init is running
 	{
 		List_first(blockQueue);
 		List_search(blockQueue, compareFunct, &(replyTO->pid));
-		List_remove(blockQueue);
+		List_remove(blockQueue); // remove block process from the blocked queue
 		if (Running->pid == 0)
 		{
 			Running = replyTO;
@@ -564,6 +656,7 @@ bool Reply(int pid, char *msg) // if unblocked check if init is running
 			return true;
 		}
 		int priorty = replyTO->curPriority;
+		replyTO->status = queued;
 		if (priorty == 0)
 			List_append(queue0, replyTO);
 
@@ -572,13 +665,20 @@ bool Reply(int pid, char *msg) // if unblocked check if init is running
 		else if (priorty == 1)
 			List_append(queue2, replyTO);
 	}
+	else if (replyTO->recieveStatus == receive_Wout_message) // if can only get block from send
+	{
+		free(msg);
+		printf("Can only receive from a send\n");
+		return false;
+	}	
 	else
 	{
+		free(msg);
 		printf("The Process that you're replying is currently not waiting for a response\n");
 		return false;
 	}
 
-	replyTO->message = msg;
+	replyTO->message = msg; // give the ex-blocked process its data
 	replyTO->recieveStatus = message_in_inbox;
 	replyTO->replystatus = nones;
 	return true;
@@ -587,7 +687,7 @@ bool Reply(int pid, char *msg) // if unblocked check if init is running
 bool newSemaphore(int semaphore, int initial)
 {
 	// 0 to 4 sem ID
-	printf("hey %d\n", initial);
+	
 	if (semaphore >= 0 && semaphore < 5 && initial >= 0)
 	{
 		if (!sem[semaphore].created)
@@ -598,12 +698,12 @@ bool newSemaphore(int semaphore, int initial)
 		}
 		else
 		{
-			printf("Sem already made \n");
+			printf("Sem has already been made!\n");
 		}
 	}
 	else
 	{
-		printf("Invalid Sem ID \n");
+		printf("Sem ID not found!\n");
 	}
 	return false;
 }
@@ -755,5 +855,10 @@ void Totalinfo()
 	printQueueInfo(blockQueue);
 	printf("\n Blocked by semaphore:\n");
 	printQueueInfo(blockedALLsem);
+	if (Running->pid != 0)
+	{
+		printf("\n Init Process:\n");
+		printProcess(init);
+	}
 	
 }

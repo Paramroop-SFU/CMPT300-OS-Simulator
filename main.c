@@ -20,6 +20,7 @@ int main()
     printf("Some Commands have additonal prompts\n");
     Init(); // set up init
     initSem();
+    int cycle = 1;
     while (1) {
         
         printf("\nEnter the key keyword:\n");
@@ -56,7 +57,7 @@ int main()
                 // adding malloc for the char
                 char* message = (char*)malloc(40*sizeof(char));
                 printf("Enter message (max 40 characters): "); // need to use malloc
-                scanf("%[^\n]s", message);
+                scanf("%40[^\n]s", message);
                  while ((c = getchar()) != '\n' && c != EOF);
                 Send(pid, message);
                 break;
@@ -69,7 +70,7 @@ int main()
                  while ((c = getchar()) != '\n' && c != EOF);
                  char* reply = (char*)malloc(40*sizeof(char));
                 printf("Enter reply message (max 40 characters): ");
-                scanf("%[^\n]s", reply);
+                scanf("%40[^\n]s", reply);
                  while ((c = getchar()) != '\n' && c != EOF);
                 Reply(pid, reply);
                 break;
@@ -107,9 +108,15 @@ int main()
                 printf("Exiting simulation.\n");
                 return 0;
             default:
+                
                 printf("Invalid key. Please try again.\n");
         }
-        
+        print_rec();
+        cycle++;
+        if (cycle %7 == 0)
+        {
+            starvation();
+        }
     }
 
     return 0;
