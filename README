@@ -1,6 +1,8 @@
 Things to do
 make a catch for if user makes the wrong pid choice
-    send has a catch
+    send has a catch been added
+
+Make sure to fix print 
 
 Document for Stravation problem 
 rn does noting for it
@@ -13,6 +15,11 @@ Document if u allow init to do semaphore
 when exiting a process make sure to free the message if it has one
 
 
- documentation for more than one message
+ Documentation for more than one message
     If process Receives another message while one is still pending then the most recent message will fail a
     and not send
+
+ Documentation for Semaphores and init
+    We chose init to not be allowed to use semaphores, P calls since they cannot be blocked and this will just cause problems for other process using them.
+
+ // if unblocked check if init is running

@@ -44,7 +44,7 @@ typedef struct
 	Status status;
 	int pid;
 	char*message;
-	int replyPID;
+	
 	replyStatus replystatus;
 	recieveStatus recieveStatus;
 
